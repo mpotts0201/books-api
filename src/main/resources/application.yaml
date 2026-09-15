@@ -1,3 +1,7 @@
 spring:
   application:
     name: books-api
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
