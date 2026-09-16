@@ -2,71 +2,74 @@
 
 ## Who / how
 
-mpott is a 7-year TS/JS frontend dev learning Java + Spring Boot, aiming to become a Java dev.
-Claude is the tutor, per CLAUDE.md: **explain first with snippets in chat, mpott types all code and runs all commands** (Windows terminal, `.\gradlew` forms — Claude's WSL has no JDK, so `!`-prefix Gradle commands fail there). Teach with TS/Node analogies; explain Java/Spring idioms, skip general programming concepts.
+mpott is a 7-year **JavaScript** frontend dev learning Java + Spring Boot, aiming to become a Java dev. **Read the "How we work together" section of CLAUDE.md first; it was rewritten on 2026-09-16.** Key corrections from that session:
 
-mpott has started asking to attempt changes **without seeing code first** (did the controller→service switch this way). Offer that option for routine edits; show code for new concepts.
+- Knows TS *typing* only. Has never used classes, constructors, `super`, inheritance, or interfaces. Backend knowledge is the MVC shape and nothing deeper. Don't reach for TS-class or OOP analogies; use plain JS, Express `req`/`res`, and `fetch`.
+- Label every new thing as **Java concept** (learn), **Spring concept** (learn), or **library name** (one sentence, move on). The "so many files / so much soup" frustration came from treating those as one pile.
+- Stay project-based. When a Java concept bites, take a ~15-minute detour on it using their own code, then return to the feature. They chose this over pausing to study Java; it's how their bootcamp worked.
+- Explain first with snippets in chat, they type it in, they run every command (Windows, `.\gradlew`; Claude's WSL has no JDK). Claude reads files and runs `git status`/`git log`; ask before `docker exec` on their behalf.
+- Offer "try it without seeing code" for edits that reuse a taught pattern. They did GET-by-id this way and got the controller right first try.
+- Postman for manual requests. They rejected `.http` files and saved collections as needless upkeep given Testcontainers is coming in step 7. Throwaway Postman tabs are fine. PowerShell mangles `curl` JSON quoting; don't suggest curl there.
 
-Docker is reachable from Claude's WSL side (`docker ps`, `docker exec`), but mpott prefers to run DB inspection commands themself — ask before running `docker exec` on their behalf.
+## Done — steps 1, 2, and half of 3 ✅
 
-## Done — steps 1 and 2 of the CLAUDE.md build order ✅
+**Step 1:** `GET /books` hardcoded. Commit `078f746`.
 
-**Step 1:** `GET /books` hardcoded. Committed `078f746`.
+**Step 2:** `Book` entity + JPA repository on Postgres. Commits `e4373b9` → `3798f0a`.
 
-**Step 2:** `Book` entity + JPA repository, backed by Postgres. Verified end to end: table created by Hibernate, seeded rows persist across restarts, `curl localhost:8080/books` returns both books with ids 1 and 2. Commits `e4373b9` → `3798f0a`.
+**Step 3 (in progress):**
+- `POST /books` → 201 + `Location` header. Commit `51d5b6e`.
+- `GET /books/{id}` → 200, or throws `BookNotFoundException` (currently surfaces as a 500 until step 5). Commit `5ecf49b`.
 
 Current source tree (all under `src/main/java/com/books/books_api/`):
 
-- `config/BookSeeder.java` — `@Component implements CommandLineRunner`, count-guarded, seeds Hobbit + Dune via `saveAll`. Dev-only; to be replaced by a Flyway migration or profile-gated in step 6.
-- `controller/BookController.java` — constructor-injected `BookService`, `getBooks()` returns `bookService.getAllBooks()`
+- `config/BookSeeder.java` — `@Component implements CommandLineRunner`, count-guarded, seeds Hobbit + Dune. Dev-only; profile-gate or replace at step 6.
+- `controller/BookController.java` — `getBooks()`, `getBook(@PathVariable Long id)`, `createBook(@RequestBody CreateBookRequest)` returning `ResponseEntity.created(location).body(dto)`.
 - `dto/BookDto.java` — `record BookDto(Long id, String title, String author, int publishedYear)`
-- `entity/BookEntity.java` — `@Entity @Table("books")`, Lombok `@Getter @Setter @NoArgsConstructor`, `@Id @GeneratedValue(IDENTITY) Long id`
-- `repository/BookRepository.java` — `extends JpaRepository<BookEntity, Long>`, empty
-- `service/BookService.java` — `@Service @RequiredArgsConstructor`, `getAllBooks()` streams entities through private `toDto()`. No `@Transactional` yet (promised for step 3).
+- `dto/CreateBookRequest.java` — `record CreateBookRequest(String title, String author, int publishedYear)`; no id, server owns ids.
+- `entity/BookEntity.java` — `@Entity @Table("books")`, Lombok getters/setters/no-arg, `IDENTITY` id.
+- `exception/BookNotFoundException.java` — `extends RuntimeException`, one `(String message)` constructor calling `super(message)`.
+- `repository/BookRepository.java` — `extends JpaRepository<BookEntity, Long>`, empty.
+- `service/BookService.java` — `getAllBooks()`, `createBook()` via private `toEntity()`, `getBook(id)` as `findById(id).map(this::toDto).orElseThrow(...)`. Private `toDto()`. **No `@Transactional` yet; introduce at PUT.**
 
-`application.yaml` has `spring.jpa.hibernate.ddl-auto: update` and `spring.jpa.show-sql: true`.
+`application.yaml`: `ddl-auto: update`, `show-sql: true`. `.gitattributes` has `* text=auto`.
 
-Housekeeping done this session: `.gitattributes` now has `* text=auto` (IntelliJ on Windows had rewritten files as CRLF, producing phantom diffs).
-
-Session recap artifacts (concepts, vocabulary, Q&A, command crib), same format, one per session:
+Session recap artifacts (concepts, vocabulary, Q&A, command crib), one per session:
 - Day one / step 1: https://claude.ai/artifact/6csVopQN4W9m1Pkr6Gw8Du
 - Day two / step 2: https://claude.ai/artifact/RejnfYAoRgey7asF3yNpvK
+- Day three / step 3 first half: not requested this session.
 
-mpott asks for one of these at the end of each session; reuse the same design system and section order.
+They usually ask for one at the end of a session; reuse the same design system and section order.
 
 ## Concepts already taught (don't re-explain unless asked)
 
-**From step 1:** Gradle task graph / wrapper / BOM / no-install-step; Docker's role (Spring only expects an endpoint; the four layers server→database→schema→rows); component scanning + auto-configuration; package=dir, class=file; record vs class; DTO-as-firewall; JPA spec vs Hibernate impl vs Spring Data JPA; Tomcat ≈ app.listen; `Started BooksApiApplication` = readiness; terminal for build/test, IDE for run/debug.
+**From steps 1–2:** Gradle wrapper/BOM; Docker's role; component scanning; package=dir, class=file; record vs class; DTO-as-firewall; JPA vs Hibernate vs Spring Data; full request path controller → service → repository → Hibernate → JDBC → Postgres; entity as table declaration; `ddl-auto` values; why records can't be entities; Lombok annotations; repository interface pattern; beans + constructor injection; streams and method references; naming strategy; `Long` vs `long`; `CommandLineRunner`; compose container naming.
 
-**From step 2:**
-- Full request path: controller → service → repository → Hibernate → JDBC (driver = `org.postgresql`, pool = Hikari) → Postgres. mpott can recite this; the correction they needed twice was "the ORM is Hibernate, a library underneath; no file you write *is* the ORM."
-- Entity = Java-side table declaration; source of truth only while `ddl-auto: update`, flips to Flyway migrations + `validate` in step 6. Why Flyway (history, prod safety, team merges) — compared to Prisma Migrate.
-- `ddl-auto` values: none / update / create-drop / validate.
-- Why records can't be entities (no-arg constructor, mutable fields, reflection). Lombok `@Getter/@Setter/@NoArgsConstructor/@RequiredArgsConstructor` — what each generates; annotation order doesn't matter.
-- Repository = interface you declare, Spring Data generates the impl, Hibernate does the labor. "Declare an interface, framework implements it" pattern flagged as recurring (HTTP clients, Mockito later).
-- Beans + DI as one idea: Spring makes one instance, hands it to constructors by type. Constructor injection idiom; avoid field `@Autowired` (untestable). Why `BookService.getAllBooks()` on the class fails (not static).
-- Streams: `.stream().map(this::toDto).toList()` ≈ `.map()`; method references.
-- Hibernate naming strategy (camelCase → snake_case); primitive `int` → `not null`, `String` → nullable `varchar(255)`; `@Column(length/nullable)` for later.
-- `Long` vs `long`, boxed vs primitive, why ids are boxed `Long` (null before save) and 64-bit (range); UUID as the alternative.
-- `CommandLineRunner`, idempotent seeders, `String... args` varargs.
-- Compose container naming `<project>-<service>-<index>`; Docker Desktop's grouping is a UI illusion; `docker compose exec postgres ...` as the name-independent form. Creds come from `compose.yaml` env vars (`myuser` / `secret` / `mydatabase`).
-- Career context given: this layering is the standard enterprise Spring shape; real services add package-by-feature, Actuator/observability, springdoc, RFC 9457 Problem Details, OAuth2 resource server with an IdP rather than hand-rolled JWT, Dockerfile/K8s, `@Transactional`/N+1. Reassured that nobody holds all the plumbing in their head; Initializr, spring.io guides, Baeldung, and team templates are normal.
+**From step 3 / 2026-09-16:**
+- **Which annotation lives in which package**, as a table keyed on "who talks to this class": controller ↔ HTTP (`@*Mapping`, `@RequestBody`, `@PathVariable`, `ResponseEntity`); service ↔ Java code (`@Service`, `@Transactional`); entity ↔ schema; dto ↔ JSON, no annotations. Each layer holds one field for the layer below and never imports across. They needed this after putting `@PostMapping` in the service and swapping the two `createBook` bodies between files. Re-show the table if placement confusion recurs.
+- `ResponseEntity` is Spring's HTTP-response class, imported not written, unrelated to JPA entities despite the name. 405 = path matched, verb didn't; 404 = no path.
+- Separate `CreateBookRequest` vs reusing `BookDto`, and why. `save()` return value is the truth (id assigned by `IDENTITY`).
+- `Optional`: `.map()` / `.orElseThrow()`. Trap hit: `.stream()` on an `Optional` yields a `Stream`, which has no `orElseThrow`.
+- **Constructors (Java concept, taught properly):** same name as class, no return type; free no-arg one disappears when you write any constructor; overloads by parameter list; `@NoArgsConstructor` / `@RequiredArgsConstructor` (final fields) as Lombok-written constructors; records get a canonical constructor from their header; who calls each constructor in this codebase (Spring, Jackson, Hibernate, their own code). They initially said `CreateBookRequest` had zero constructors; corrected.
+- **`extends` / `super`:** inherits fields and methods, **not constructors**, hence the hand-written exception constructor with `super(message)`.
+- **Interfaces:** a named set of promises; `implements` keeps them; interface-`extends`-interface just merges promise lists; `BookRepository` is the unusual "framework implements it for you" case; `BookSeeder implements CommandLineRunner` and `List<BookDto>` are the normal cases. Why interface over class extension: single inheritance, no implementation baggage, swappability (Mockito fake in step 7). Told honestly that a class would usually "just work" in a solo project and that every `extends`/`implements` in this project so far was dictated by framework or language, not chosen. The bones for choosing will come from step 7 tests, not explanation.
+- Checked vs unchecked exceptions: only the one-liner "extend `RuntimeException`, no declaring/catching required." Not yet taught properly.
+- Career reassurance given: 6–12 months part-time to junior-ready is realistic; the "must learn" pile is short (classes/constructors, interfaces, static, exceptions, generics, Optional/streams/records) and the "library names" pile is never learned in depth by anyone.
 
-## Next — step 3: full CRUD for books
+## Next — finish step 3
 
-Planned teaching sequence:
-1. `POST /books` — introduce `@RequestBody`, `@PostMapping`, `ResponseEntity` + `201 Created`. Inbound DTO question: reuse `BookDto` with a null id, or a separate `CreateBookRequest` record? Recommend a separate request record (id shouldn't be client-settable) and explain the trade-off. Service gets `toEntity()` as the inbound half of the firewall.
-2. `GET /books/{id}` — `@PathVariable`, `Optional` from `findById`, what to do on miss (throw a custom `BookNotFoundException` now; the `@ControllerAdvice` that turns it into a 404 body is step 5, so for now expect a 500 and explain why that's temporary).
-3. `PUT /books/{id}` — load, mutate via setters, save. **Introduce `@Transactional` here** with dirty checking: inside a transaction Hibernate flushes changed entities without an explicit `save`. Explain the persistence context / managed vs detached entities at a first-pass level.
-4. `DELETE /books/{id}` — `204 No Content`, `existsById` guard.
-5. Verify each with curl (`-X POST -H "Content-Type: application/json" -d ...`) or suggest IntelliJ's HTTP client / a `.http` file.
+1. **`PUT /books/{id}`** — show code, this is a Spring concept. Load with `findById` + `orElseThrow`, mutate via setters, no explicit `save`. **Introduce `@Transactional` on the service method** and dirty checking: within a transaction Hibernate flushes changed managed entities at commit. Persistence context, managed vs detached, at first-pass level only. Label it Spring/JPA concept. Inbound DTO: reuse `CreateBookRequest` or add `UpdateBookRequest`; recommend reuse for now and say why a separate one shows up once fields diverge. Return 200 with the updated `BookDto`.
+2. **`DELETE /books/{id}`** — offer blind attempt. Hints: `@DeleteMapping("/{id}")`, `ResponseEntity<Void>` + `ResponseEntity.noContent().build()` for 204, `existsById` guard throwing `BookNotFoundException`, `deleteById`.
+3. Verify each in Postman. Suggest they write a `PUT` against the Neuromancer row they created, then delete it.
+4. Commit, then step 4 (Author entity, one-to-many).
 
-Offer the "try it without code first" mode for steps 2 and 4 once POST has been shown.
+Java concepts likely to bite next and worth a detour when they do: `void` return + `ResponseEntity<Void>` generics, `static` (they haven't seen it yet), checked exceptions if anything forces a `throws`.
 
 ## Small open items
 
-- `compose.yaml`: `postgres:latest` unpinned, Initializr placeholder creds — fine for now, revisit at step 6.
-- `BookSeeder` runs in every environment; profile-gate (`@Profile("dev")`) or remove at step 6.
-- `show-sql: true` is fine for learning; mention `logging.level.org.hibernate.SQL` as the production-grade alternative when it comes up.
-- Windows Firewall inbound for Java was denied — harmless for localhost; must allow **Private** networks when the React Native client tests from a phone.
-- `TestcontainersConfiguration` uses raw `PostgreSQLContainer` (missing `<?>`) — minor, teachable at step 7.
+- `compose.yaml`: `postgres:latest` unpinned, Initializr placeholder creds — revisit at step 6.
+- `BookSeeder` runs in every environment; profile-gate or remove at step 6.
+- `show-sql: true` fine for learning; mention `logging.level.org.hibernate.SQL` when it comes up.
+- Windows Firewall inbound for Java denied — must allow **Private** networks when the React Native client tests from a phone.
+- `TestcontainersConfiguration` uses raw `PostgreSQLContainer` (missing `<?>`) — teachable at step 7.
+- `BookNotFoundException` takes a message string; at step 5 consider changing it to take the `Long id` and build the message itself, so the 404 handler can use the id.

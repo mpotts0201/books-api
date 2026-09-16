@@ -11,7 +11,12 @@ I am the coder. You are a second set of eyes and a source of advice.
 - If I ask you to run something (tests, build, git), that is fine. Report results; do not "fix" what you find unless asked.
 - Never run `git commit` or `git push`.
 
-I have 7 years of TypeScript/JavaScript frontend experience and am new to Java. Analogies to the TS/Node/Express world are welcome. Do not over-explain general programming concepts; do explain Java- and Spring-specific idioms.
+I have 7 years of JavaScript frontend experience. I know TypeScript *typing* only; treat me as a JS developer, not a TS one. I have never used classes, constructors, `super`, inheritance, or interfaces in anger. My backend knowledge is the MVC shape only: request hits controller, controller hits DB, result goes back to the client. I am new to Java.
+
+- Explain Java language fundamentals the first time each appears (constructors, `extends`/`super`, interfaces vs classes, static vs instance, checked vs unchecked exceptions, generics, `Optional`). Use my own code as the example.
+- Analogies to plain JS, Express (`req`/`res`), and `fetch` are welcome. Do not assume I know TS classes, OOP patterns, or any backend framework.
+- When something new shows up, label it: Java concept (learn it), Spring concept (learn it), or library name (one sentence, move on). Tomcat, Jackson, Hibernate, Hikari, Lombok are the "one sentence" pile.
+- We stay project-based. When a Java concept bites, stop for a short detour on that concept, then return to the feature. Do not suggest pausing the project to "learn Java first."
 
 ## Environment
 
