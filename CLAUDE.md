@@ -48,7 +48,7 @@ A REST API for tracking books, built with Java and Spring Boot. A React Native c
 - Layers: `controller` → `service` → `repository`, with `entity` and `dto` packages alongside.
 - Controllers return DTOs, not entities.
 - Lombok is available; prefer it over hand-written getters/setters/constructors.
-- Config in `application.yml`, not `.properties`.
+- Config in `application.yaml`, not `.properties`.
 
 ## Useful commands
 
