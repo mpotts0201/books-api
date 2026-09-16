@@ -22,6 +22,11 @@ public class BookController {
         return bookService.getAllBooks();
     }
 
+    @GetMapping("/{id}")
+    public BookDto getBook(@PathVariable Long id) {
+        return bookService.getBook(id);
+    }
+
     @PostMapping
     public ResponseEntity<BookDto> createBook(@RequestBody CreateBookRequest request) {
         BookDto created = bookService.createBook(request);

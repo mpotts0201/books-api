@@ -3,9 +3,11 @@ package com.books.books_api.service;
 import com.books.books_api.dto.BookDto;
 import com.books.books_api.dto.CreateBookRequest;
 import com.books.books_api.entity.BookEntity;
+import com.books.books_api.exception.BookNotFoundException;
 import com.books.books_api.repository.BookRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 
@@ -25,6 +27,12 @@ public class BookService {
     public BookDto createBook(CreateBookRequest request) {
         BookEntity saved = bookRepository.save(toEntity(request));
         return toDto(saved);
+    }
+
+    public BookDto getBook(Long id) {
+        return bookRepository.findById(id)
+                .map(this::toDto)
+                .orElseThrow(() -> new BookNotFoundException("Book not found: " + id));
     }
 
     private BookDto toDto(BookEntity entity) {
