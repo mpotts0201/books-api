@@ -1,12 +1,13 @@
 package com.books.books_api.controller;
 
 import com.books.books_api.dto.BookDto;
+import com.books.books_api.dto.CreateBookRequest;
 import com.books.books_api.service.BookService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -19,5 +20,12 @@ public class BookController {
     @GetMapping
     public List<BookDto> getBooks() {
         return bookService.getAllBooks();
+    }
+
+    @PostMapping
+    public ResponseEntity<BookDto> createBook(@RequestBody CreateBookRequest request) {
+        BookDto created = bookService.createBook(request);
+        URI location = URI.create("/books/" + created.id());
+        return ResponseEntity.created(location).body(created);
     }
 }

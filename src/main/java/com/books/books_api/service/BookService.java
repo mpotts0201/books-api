@@ -1,6 +1,7 @@
 package com.books.books_api.service;
 
 import com.books.books_api.dto.BookDto;
+import com.books.books_api.dto.CreateBookRequest;
 import com.books.books_api.entity.BookEntity;
 import com.books.books_api.repository.BookRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,11 @@ public class BookService {
                 .toList();
     }
 
+    public BookDto createBook(CreateBookRequest request) {
+        BookEntity saved = bookRepository.save(toEntity(request));
+        return toDto(saved);
+    }
+
     private BookDto toDto(BookEntity entity) {
         return new BookDto(
                 entity.getId(),
@@ -29,4 +35,13 @@ public class BookService {
                 entity.getPublishedYear()
         );
     }
+
+    private BookEntity toEntity(CreateBookRequest request) {
+        BookEntity entity = new BookEntity();
+        entity.setTitle(request.title());
+        entity.setAuthor(request.author());
+        entity.setPublishedYear(request.publishedYear());
+        return entity;
+    }
+
 }
