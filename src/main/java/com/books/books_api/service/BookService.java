@@ -5,9 +5,9 @@ import com.books.books_api.dto.CreateBookRequest;
 import com.books.books_api.entity.BookEntity;
 import com.books.books_api.exception.BookNotFoundException;
 import com.books.books_api.repository.BookRepository;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 
@@ -33,6 +33,18 @@ public class BookService {
         return bookRepository.findById(id)
                 .map(this::toDto)
                 .orElseThrow(() -> new BookNotFoundException("Book not found: " + id));
+    }
+
+    @Transactional
+    public BookDto updateBook(Long id, CreateBookRequest request) {
+        BookEntity entity = bookRepository.findById(id)
+                .orElseThrow(() -> new BookNotFoundException("Book not found: " + id));
+
+        entity.setTitle(request.title());
+        entity.setAuthor(request.author());
+        entity.setPublishedYear(request.publishedYear());
+
+        return toDto(entity);
     }
 
     private BookDto toDto(BookEntity entity) {

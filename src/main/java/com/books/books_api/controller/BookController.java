@@ -33,4 +33,9 @@ public class BookController {
         URI location = URI.create("/books/" + created.id());
         return ResponseEntity.created(location).body(created);
     }
+
+    @PutMapping("/{id}")
+    public BookDto updateBook(@PathVariable Long id, @RequestBody CreateBookRequest request) {
+        return bookService.updateBook(id, request);
+    }
 }
