@@ -47,6 +47,14 @@ public class BookService {
         return toDto(entity);
     }
 
+    public void deleteBook(Long id) {
+        if (!bookRepository.existsById(id)) {
+            throw new BookNotFoundException("Book not found: " + id);
+        }
+
+        bookRepository.deleteById(id);
+    }
+
     private BookDto toDto(BookEntity entity) {
         return new BookDto(
                 entity.getId(),
