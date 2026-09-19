@@ -6,19 +6,15 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "books")
+@Table(name = "authors")
 @Getter
 @Setter
 @NoArgsConstructor
-public class BookEntity {
+public class AuthorEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String title;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "author_id")
-    private AuthorEntity author;
-    private int publishedYear;
+    private String name;
 }
